@@ -2,9 +2,9 @@ package co.datamonsters
 
 import co.datamonsters.facebot.api.SendApi
 
-import scala.concurrent.Future
+import scala.language.higherKinds
 
 package object facebot {
-  type ConnectionAdapter[T <: SendApi] = (Credentials, EventHandler) => T
-  type EventHandler = PartialFunction[Event, Future[_]]
+  type ConnectionAdapter[F[_], T <: SendApi[F]] = (Credentials, EventHandler[F]) => T
+  type EventHandler[F[_]] = PartialFunction[Event[F], F[_]]
 }

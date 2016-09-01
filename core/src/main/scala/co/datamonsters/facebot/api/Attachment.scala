@@ -11,19 +11,14 @@ sealed trait Attachment {
 
 object Attachment {
 
-  @pushka case class Template(payload: TemplatePayload, `type`: String = "template") extends Attachment
-  @pushka case class Image(payload: Url, `type`: String = "image") extends Attachment
-  @pushka case class Audio(payload: Url, `type`: String = "audio") extends Attachment
-  @pushka case class Video(payload: Url, `type`: String = "video") extends Attachment
-  @pushka case class File(payload: Url, `type`: String = "file") extends Attachment
-
-  implicit val rw = new RW[Attachment] {
+  implicit object AttachmentRw extends RW[Attachment] {
 
     def write(value: Attachment): Ast = value match {
       case a: Attachment.Image => pushka.write(a)
       case a: Attachment.Audio => pushka.write(a)
       case a: Attachment.Video => pushka.write(a)
       case a: Attachment.File => pushka.write(a)
+      case a: Attachment.Template => pushka.write(a)
     }
 
     def read(value: Ast): Attachment = selectByField(value, "type") {
@@ -33,11 +28,42 @@ object Attachment {
       case "file" => pushka.read[File](value)
       case "template" => pushka.read[Template](value)
     }
-
   }
 
-  @pushka
-  @forceObject case class Url(url: String)
+  implicit object TemplatePayloadRw extends RW[TemplatePayload] {
+
+    import TemplatePayload._
+
+    def read(value: Ast): TemplatePayload = selectByField(value, "template_type") {
+      case "button" => pushka.read[ButtonTemplate](value)
+      case "generic" => pushka.read[GenericTemplate](value)
+    }
+
+    def write(value: TemplatePayload): Ast = value match {
+      case x: ButtonTemplate => pushka.write(x)
+      case x: GenericTemplate => pushka.write(x)
+    }
+  }
+
+  implicit object ButtonRw extends RW[TemplatePayload.Button] {
+
+    import TemplatePayload._
+    import TemplatePayload.Button._
+
+    def read(value: Ast): Button = selectByField(value, "type") {
+      case "web_url" => pushka.read[WebUrl](value)
+      case "postback" => pushka.read[Postback](value)
+      case "phone_number" => pushka.read[PhoneNumber](value)
+    }
+
+    def write(value: Button): Ast = value match {
+      case x: WebUrl => pushka.write(x)
+      case x: Postback => pushka.write(x)
+      case x: PhoneNumber => pushka.write(x)
+    }
+  }
+
+  @pushka @forceObject case class Url(url: String)
 
   sealed trait TemplatePayload {
     def templateType: String
@@ -58,9 +84,9 @@ object Attachment {
 
     object GenericTemplate {
 
-      def apply(elements: Element*) = GenericTemplate(elements)
+      def apply(elements: Element*): GenericTemplate = GenericTemplate(elements)
 
-      case class Element(
+      @pushka case class Element(
           title: String,
           subtitle: String,
           buttons: Seq[Button],
@@ -71,7 +97,6 @@ object Attachment {
     sealed trait Button
 
     object Button {
-
       /**
         * @param phoneNumber payload format mush be ‘+’ prefix followed by the country code, area code and local number
         */
@@ -83,31 +108,6 @@ object Attachment {
 
       @pushka case class WebUrl(title: String, url: String, `type`: String = "web_url") extends Button
       @pushka case class Postback(title: String, payload: String, `type`: String = "postback") extends Button
-
-      implicit object ButtonRw extends RW[Button] {
-        def read(value: Ast): Button = selectByField(value, "type") {
-          case "web_url" => pushka.read[WebUrl](value)
-          case "postback" => pushka.read[Postback](value)
-          case "phone_number" => pushka.read[PhoneNumber](value)
-        }
-        def write(value: Button): Ast = value match {
-          case x: WebUrl => pushka.write(x)
-          case x: Postback => pushka.write(x)
-          case x: PhoneNumber => pushka.write(x)
-        }
-      }
-
-    }
-
-    implicit object TemplatePayloadRw extends RW[TemplatePayload] {
-      def read(value: Ast): TemplatePayload = selectByField(value, "template_type") {
-        case "button" => pushka.read[ButtonTemplate](value)
-        case "generic" => pushka.read[GenericTemplate](value)
-      }
-      def write(value: TemplatePayload): Ast = value match {
-        case x: ButtonTemplate => pushka.write(x)
-        case x: GenericTemplate => pushka.write(x)
-      }
     }
   }
 
@@ -125,4 +125,9 @@ object Attachment {
       case _ => throw PushkaException(value, ct.runtimeClass)
     }
 
+  @pushka case class Template(payload: TemplatePayload, `type`: String = "template") extends Attachment
+  @pushka case class Image(payload: Url, `type`: String = "image") extends Attachment
+  @pushka case class Audio(payload: Url, `type`: String = "audio") extends Attachment
+  @pushka case class Video(payload: Url, `type`: String = "video") extends Attachment
+  @pushka case class File(payload: Url, `type`: String = "file") extends Attachment
 }

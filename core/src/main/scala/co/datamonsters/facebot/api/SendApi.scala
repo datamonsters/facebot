@@ -1,16 +1,16 @@
 package co.datamonsters.facebot.api
 
-import scala.concurrent.Future
+import scala.language.higherKinds
 
-trait SendApi {
+trait SendApi[+F[_]] {
 
-  def sendMessage(recipient: Id, message: Message, notificationType: NotificationType): Future[Response]
+  def sendMessage(recipient: Id, message: Message, notificationType: NotificationType): F[Response]
 
-  def typingOn(recipient: Id): Future[Response]
+  def typingOn(recipient: Id): F[Response]
 
-  def typingOff(recipient: Id): Future[Response]
+  def typingOff(recipient: Id): F[Response]
 
-  def markSeen(recipient: Id): Future[Response]
+  def markSeen(recipient: Id): F[Response]
 }
 
 
