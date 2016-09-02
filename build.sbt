@@ -1,24 +1,35 @@
 lazy val http4sVersion = "0.14.4"
 
+val publishSettings = Seq(
+  publishTo := {
+    isSnapshot.value match {
+      case true => Some("iDecide Snapshots" at "https://nexus.flexis.ru/content/repositories/snapshots")
+      case false => Some("iDecide Releases" at "https://nexus.flexis.ru/content/repositories/releases")
+    }
+  }
+)
+
 val commonSettings = Seq(
   organization := "co.datamonsters",
-  scalaVersion := "2.11.8"
+  scalaVersion := "2.11.8",
+  version := "0.1.0"
 )
 
 lazy val core = project
   .settings(commonSettings:_*)
+  .settings(publishSettings:_*)
   .settings(
     normalizedName := "facebot-core",
-    libraryDependencies += "com.github.fomkin" %% "pushka-json" % "0.6.2",
+    libraryDependencies += "com.github.fomkin" %% "pushka-json" % "0.7.1",
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
 
 lazy val http4s = project
   .settings(commonSettings:_*)
+  .settings(publishSettings:_*)
   .settings(
     normalizedName := "facebot-http4s",
     libraryDependencies ++= Seq(
-      "com.github.fomkin" %% "pushka-json" % "0.7.0-SNAPSHOT",
       "org.http4s" %% "http4s-dsl" % http4sVersion,
       "org.http4s" %% "http4s-blaze-server" % http4sVersion,
       "org.http4s" %% "http4s-blaze-client" % http4sVersion,
@@ -27,5 +38,7 @@ lazy val http4s = project
   )
   .dependsOn(core)
 
-
+lazy val root = (project in file("."))
+  .settings(publishTo := None)
+  .aggregate(core, http4s)
 
