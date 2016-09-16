@@ -60,7 +60,8 @@ abstract class Connection[+F[_]](credentials: Credentials, eventHandler: EventHa
     send("messages", json, json => pushka.json.read[Response](json))
   }
 
-  def sendMessage(recipient: Id, message: Message, notificationType: NotificationType): F[Response] = {
+  def sendMessage(recipient: Id, message: Message,
+      notificationType: NotificationType = NotificationType.Regular): F[Response] = {
     val req = Request(recipient, Some(message), None, Some(notificationType.value))
     messagesRequestResponse(req)
   }

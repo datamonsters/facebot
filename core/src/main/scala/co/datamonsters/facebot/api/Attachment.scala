@@ -90,7 +90,7 @@ object Attachment {
           title: String,
           subtitle: String,
           buttons: Seq[Button],
-          @key("image_url") image_url: String
+          @key("image_url") imageUrl: String
       )
     }
 

@@ -8,7 +8,7 @@ sealed trait Response
 object Response {
   @pushka case class Success(
     @key("recipient_id") recipientId: String,
-    @key("message_id") messageId: String
+    @key("message_id") messageId: Option[String]
   ) extends Response
 
   @pushka case class Error(

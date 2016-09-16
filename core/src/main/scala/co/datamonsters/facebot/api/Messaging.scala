@@ -50,8 +50,12 @@ object Messaging {
   @pushka case class PostbackReceived(
       sender: Id,
       recipient: Id,
-      payload: Ast
+      postback: PostbackReceived.Payload
   ) extends Messaging
+
+  object PostbackReceived {
+    @pushka @forceObject case class Payload(payload: String)
+  }
 
   // AuthenticationCallback
 

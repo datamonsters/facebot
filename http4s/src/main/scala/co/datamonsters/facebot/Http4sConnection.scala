@@ -8,6 +8,7 @@ import org.http4s.client.blaze._
 import org.http4s.dsl._
 import org.http4s.headers.`Content-Type`
 import org.slf4j.LoggerFactory
+import pushka.PushkaException
 
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
@@ -81,36 +82,6 @@ final class Http4sConnection(credentials: Credentials, eventHandler: EventHandle
 
 
 object Http4sConnection {
-
-  type Http4sConnectionAdapter = ConnectionAdapter[Task, Http4sConnection]
-
-  def adapter: Http4sConnectionAdapter = {
-    (credentials: Credentials, eventHandler: EventHandler[Task]) => {
-      new Http4sConnection(credentials, eventHandler)
-    }
-  }
-
-//  implicit final class FutureExtensionOps[A](future: => Future[A]) {
-//
-//    def asTask(implicit ec: ExecutionContext): Task[A] = {
-//      Task.async { register =>
-//        future onComplete {
-//          case scala.util.Success(v) => register(v.right)
-//          case scala.util.Failure(ex) => register(ex.left)
-//        }
-//      }
-//    }
-//  }
-//
-//  implicit final class TaskExtensionOps[A](task: => Task[A]) {
-//    import scalaz.{-\/, \/-}
-//    def runFuture(): Future[A] = {
-//      val p: Promise[A] = Promise()
-//      task runAsync {
-//        case -\/(ex) => p.failure(ex)
-//        case \/-(r) => p.success(r)
-//      }
-//      p.future
-//    }
-//  }
+  def apply(credentials: Credentials)(eventHandler: EventHandler[Task]): Http4sConnection =
+    new Http4sConnection(credentials, eventHandler)
 }

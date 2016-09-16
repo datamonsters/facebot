@@ -12,7 +12,7 @@ val publishSettings = Seq(
 val commonSettings = Seq(
   organization := "co.datamonsters",
   scalaVersion := "2.11.8",
-  version := "0.1.0"
+  version := "0.2.0"
 )
 
 lazy val core = project
@@ -32,13 +32,12 @@ lazy val http4s = project
     libraryDependencies ++= Seq(
       "org.http4s" %% "http4s-dsl" % http4sVersion,
       "org.http4s" %% "http4s-blaze-server" % http4sVersion,
-      "org.http4s" %% "http4s-blaze-client" % http4sVersion,
-      "org.slf4j" % "slf4j-simple" % "1.7.21"
+      "org.http4s" %% "http4s-blaze-client" % http4sVersion
     )
   )
   .dependsOn(core)
 
 lazy val root = (project in file("."))
-  .settings(publishTo := None)
+  .settings(publish := {})
   .aggregate(core, http4s)
 
