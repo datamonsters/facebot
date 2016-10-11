@@ -12,6 +12,8 @@ trait SendApi[+F[_]] {
   def typingOff(recipient: Id): F[Response]
 
   def markSeen(recipient: Id): F[Response]
+
+  def profile(userId: Id): F[UserInfo]
 }
 
 

@@ -16,7 +16,10 @@ abstract class Connection[+F[_]](credentials: Credentials, eventHandler: EventHa
     *
     * @return response
     */
-  def send(endpoint: String, request: String, responseParser: String => Response): F[Response]
+  def send[R](endpoint: String,
+              params: Map[String, String],
+              bodyOpt: Option[String],
+              parseResponse: String => R): F[R]
 
   def receiveVerify(params: Map[String, Seq[String]]): Try[String] = Try {
     if (params.get("hub.mode").contains(Seq("subscribe")) && params.contains("hub.challenge")) {
@@ -57,7 +60,7 @@ abstract class Connection[+F[_]](credentials: Credentials, eventHandler: EventHa
 
   private def messagesRequestResponse(req: Request): F[Response] = {
     val json = pushka.json.write(req)
-    send("messages", json, json => pushka.json.read[Response](json))
+    send("me/messages", Map.empty, Some(json), json => pushka.json.read[Response](json))
   }
 
   def sendMessage(recipient: Id, message: Message,
@@ -79,5 +82,10 @@ abstract class Connection[+F[_]](credentials: Credentials, eventHandler: EventHa
   def markSeen(recipient: Id): F[Response] = {
     val req = Request(recipient, None, Some("mark_seen"), None)
     messagesRequestResponse(req)
+  }
+
+  def profile(userId: Id): F[UserInfo] = {
+    val params = Map("fields" -> "first_name,last_name,profile_pic,locale,timezone,gender")
+    send(userId.value, params, None, json => pushka.json.read[UserInfo](json))
   }
 }

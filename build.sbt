@@ -12,7 +12,7 @@ val publishSettings = Seq(
 val commonSettings = Seq(
   organization := "co.datamonsters",
   scalaVersion := "2.11.8",
-  version := "0.2.0"
+  version := "0.3.0"
 )
 
 lazy val core = project

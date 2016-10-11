@@ -10,6 +10,7 @@ import org.http4s.headers.`Content-Type`
 import org.slf4j.LoggerFactory
 import pushka.PushkaException
 
+import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
 import scalaz.concurrent.Task
@@ -59,20 +60,40 @@ final class Http4sConnection(credentials: Credentials, eventHandler: EventHandle
       }
   }
 
-  def send(endpoint: String, request: String, parseResponse: String => FacebotResponse): Task[FacebotResponse] = {
-    println(s">>> $request")
-    val token = credentials.accessToken
-    val fbUri = Uri(
-      scheme = Some("https".ci),
-      authority = Some(Authority(host = RegName("graph.facebook.com"))),
-      path = s"/$apiVersion/me/$endpoint?access_token=$token"
-    )
-    val ct = `Content-Type`(MediaType.`application/json`, Charset.`UTF-8`)
-    val req = Request(Method.POST, fbUri)
-      .withBody(request)
-      .withContentType(Some(ct))
+  def send[R](endpoint: String,
+              params: Map[String, String],
+              bodyOpt: Option[String],
+              parseResponse: String => R): Task[R] = {
+    val fbUri = {
 
-    client(req) flatMap { response =>
+      @tailrec def paramsLoop(acc: List[String], list: List[(String, String)]): String = list match {
+        case Nil => acc.reverse.mkString
+        case (k, v) :: xs if acc.isEmpty => paramsLoop(s"?$k=$v" :: acc, xs)
+        case (k, v) :: xs => paramsLoop(s"&$k=$v" :: acc, xs)
+      }
+
+      val paramsWithAccessToken = params + ("access_token" -> credentials.accessToken)
+      val paramsPathPart = paramsLoop(Nil, paramsWithAccessToken.toList)
+
+      Uri(
+        scheme = Some("https".ci),
+        authority = Some(Authority(host = RegName("graph.facebook.com"))),
+        path = s"/$apiVersion/$endpoint/$paramsPathPart"
+      )
+    }
+
+
+    val req = bodyOpt match {
+      case None => client(Request(Method.GET, fbUri))
+      case Some(body) =>
+        val ct = `Content-Type`(MediaType.`application/json`, Charset.`UTF-8`)
+        val req = Request(Method.POST, fbUri)
+          .withBody(body)
+          .withContentType(Some(ct))
+        client(req)
+    }
+
+    req flatMap { response =>
       response.bodyAsText.runFoldMap(identity) map { body =>
         parseResponse(body)
       }

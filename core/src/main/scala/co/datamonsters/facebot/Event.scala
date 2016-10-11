@@ -2,7 +2,6 @@ package co.datamonsters.facebot
 
 import co.datamonsters.facebot.api.{Response, _}
 
-import scala.concurrent.Future
 import scala.language.higherKinds
 
 class Event[+F[_]](val sendApi: SendApi[F],
@@ -27,6 +26,9 @@ class Event[+F[_]](val sendApi: SendApi[F],
 
   def typingOff(recipient: Id): F[Response] =
     sendApi.typingOff(recipient)
+
+  def profile(userId: Id): F[UserInfo] =
+    sendApi.profile(userId)
 }
 
 object Event {
