@@ -37,7 +37,17 @@ lazy val http4s = project
   )
   .dependsOn(core)
 
+lazy val akkahttp = project
+  .settings(commonSettings:_*)
+  .settings(publishSettings:_*)
+  .settings(
+    normalizedName := "facebot-akka-http",
+    libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % "2.4.11"
+  )
+  .dependsOn(core)
+
 lazy val root = (project in file("."))
   .settings(publish := {})
-  .aggregate(core, http4s)
+  .aggregate(core, http4s, akkahttp)
 
+mainClass in (Compile, run) := Some("akkahttp")
