@@ -1,7 +1,7 @@
 package co.datamonsters.facebot
 
 import akka.actor.ActorSystem
-import akka.http.javadsl.server.{PathMatchers, RouteResults}
+import akka.http.scaladsl.server.PathMatchers
 import akka.http.scaladsl.{Http, server}
 import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import akka.http.scaladsl.model._
@@ -25,23 +25,30 @@ import akka.http.scaladsl.server.Route
 
 import scala.annotation.tailrec
 
+import org.slf4j.LoggerFactory
+
 /**
   * Created by z on 11.10.2016.
   */
+
 final class AkkaHttpConnection(
     credentials: Credentials,
     eventHandler: EventHandler[Future])(implicit val system: ActorSystem)
     extends Connection[Future](credentials, eventHandler) {
+
+  private val logger = LoggerFactory.getLogger(AkkaHttpConnection.getClass)
 
   implicit val materializer = ActorMaterializer()
   // needed for the future flatMap/onComplete in the end
   implicit val executionContext = system.dispatcher
 
   private def facebotException(e: FacebotException): HttpResponse = {
+    logger.debug("FacebotException", e)
     HttpResponse(BadRequest, Nil, e.getMessage)
   }
 
   private def internalServerError(e: Throwable): HttpResponse = {
+    logger.error("Error occurred when request processing", e)
     HttpResponse(InternalServerError)
   }
 
@@ -114,9 +121,9 @@ final class AkkaHttpConnection(
         case (Success(resp), _) if resp.status == StatusCodes.OK =>
           resp.entity.dataBytes
         case (Success(resp), _) =>
-          println("Wrong Status " + resp.status); Source.empty[ByteString]
+          logger.info("Wrong Status"+ resp.status); Source.empty[ByteString]
         case (Failure(fa), _) =>
-          println("FAIL " + fa.toString); Source.empty[ByteString]
+          logger.info("FAIL " + fa.toString); Source.empty[ByteString]
       }
       .runWith(Sink.head)
       .flatMap { a =>
