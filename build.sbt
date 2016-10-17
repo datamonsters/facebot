@@ -20,7 +20,10 @@ lazy val core = project
   .settings(publishSettings:_*)
   .settings(
     normalizedName := "facebot-core",
-    libraryDependencies += "com.github.fomkin" %% "pushka-json" % "0.7.1",
+    libraryDependencies ++= Seq(
+      "com.github.fomkin" %% "pushka-json" % "0.7.1",
+      "org.slf4j" % "slf4j-api" % "1.7.21"
+    ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
 
@@ -43,9 +46,7 @@ lazy val akkahttp = project
   .settings(
     normalizedName := "facebot-akka-http",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http-experimental" % "2.4.11",
-      "org.slf4j" % "slf4j-api" % "1.7.21",
-      "org.slf4j" % "slf4j-simple" % "1.7.21"
+      "com.typesafe.akka" %% "akka-http-experimental" % "2.4.11"
     )
 
   )
