@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory
 /**
   * Created by z on 11.10.2016.
   */
-
 final class AkkaHttpConnection(
     credentials: Credentials,
     eventHandler: EventHandler[Future])(implicit val system: ActorSystem)
@@ -81,8 +80,6 @@ final class AkkaHttpConnection(
     }
   }
 
-  val poolClientFlow = Http().superPool[Int]()
-
   /**
     * Send request to platform
     *
@@ -113,22 +110,13 @@ final class AkkaHttpConnection(
                     Nil,
                     HttpEntity(ct, ByteString(body)))
     }
-
-    Source
-      .single(req -> 0)
-      .via(poolClientFlow)
-      .map {
-        case (Success(resp), _) if resp.status == StatusCodes.OK =>
-          resp.entity.dataBytes
-        case (Success(resp), _) =>
-          logger.info("Wrong Status"+ resp.status); Source.empty[ByteString]
-        case (Failure(fa), _) =>
-          logger.info("FAIL " + fa.toString); Source.empty[ByteString]
-      }
-      .runWith(Sink.head)
-      .flatMap { a =>
-        a.runFold(ByteString.empty)(_ ++ _)
-          .map[R](a => parseResponse(a.utf8String))
+    Http()
+      .singleRequest(req)
+      .flatMap {
+        a =>
+          a.entity.dataBytes
+            .runFold(ByteString.empty)(_ ++ _)
+            .map[R](a => parseResponse(a.utf8String))
       }
   }
 }
